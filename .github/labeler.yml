@@ -1,8 +1,14 @@
-Version: 1
-Labels:
-  - Label: "TestLabel"
-    title: ".*"
-  - Label: "TestFileMatch"
-    files: 
-      - "cmd/.*.go"
-      - "pkg/.*.go"
+labels: 
+  - 
+    label: WIP
+  - 
+    label: S
+    size-below: 10
+  - 
+    label: M
+    size-above: 9
+    size-below: 300
+  - 
+    label: L
+    size-above: 300
+version: 1

@@ -1,2 +1,2 @@
 # test-repository
-this is a test repository for a course.
+this is a test repository for a course

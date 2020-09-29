@@ -13,4 +13,4 @@ jobs:
       - name: PR labeler based on multiple rules
         uses: srvaroa/labeler@v0.5
         env:
-          GITHUB_TOKEN: "5318f91b5d332957dd4f8a8152b5f08a2b45eb53"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

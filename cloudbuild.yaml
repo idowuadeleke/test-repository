@@ -1,0 +1,20 @@
+steps:
+# - name: gcr.io/cloud-builders/git
+#   args: ['clone', 'https://github.com/idowuadeleke/test-repository']
+- name: 'gcr.io/$PROJECT_ID/dataflow-python'
+  entrypoint: '/bin/bash'
+  args: [ '-c',
+          'source /venv/bin/activate' ]
+# - name: 'gcr.io/$PROJECT_ID/dataflow-python'
+#   entrypoint: 'python'
+#   args: [ 
+#           'main_pipeline_batch.py', 
+#          '--runner=DataflowRunner',
+#          '--temp_location=gs://cloudbuild-dataflow-$PROJECT_ID/',
+#          '--staging_location=gs://cloudbuild-dataflow-$PROJECT_ID/',
+#          '--project=$PROJECT_ID' ]
+# tags: ['cloud-builders-community']
+- name: gcr.io/cloud-builders/gcloud
+  id: function-deploy
+  args: ['functions', 'deploy', 'hello_gcs', '--runtime=python37',  '--trigger-resource=gs://dataflow_test_pipeline', '--trigger-event=google.storage.object.finalize']
+  dir: 'pipeline'

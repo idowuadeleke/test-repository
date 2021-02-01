@@ -9,27 +9,25 @@ PROJECT="wellio-integration"
 schema = 'full_name:STRING, timelocal:STRING, request_type:STRING, status:STRING, body_bytes_sent:STRING, http_referer:STRING, http_user_agent:STRING'
 
 
-src_path = "test_user_log_fileC.csv"
+# def regex_clean(data):
 
-def regex_clean(data):
-
-    PATTERNS =  [r'(^\S+\.[\S+\.]+\S+)\s',r'(?<=\[).+?(?=\])',
-           r'\"(\S+)\s(\S+)\s*(\S*)\"',r'\s(\d+)\s',r"(?<=\[).\d+(?=\])",
-           r'\"[A-Z][a-z]+', r'\"(http|https)://[a-z]+.[a-z]+.[a-z]+']
-    result = []
-    for match in PATTERNS:
-      try:
-        reg_match = re.search(match, data).group()
-        if reg_match:
-          result.append(reg_match)
-        else:
-          result.append(" ")
-      except:
-        print("There was an error with the regex search")
-    result = [x.strip() for x in result]
-    result = [x.replace('"', "") for x in result]
-    res = ','.join(result)
-    return res
+#     PATTERNS =  [r'(^\S+\.[\S+\.]+\S+)\s',r'(?<=\[).+?(?=\])',
+#            r'\"(\S+)\s(\S+)\s*(\S*)\"',r'\s(\d+)\s',r"(?<=\[).\d+(?=\])",
+#            r'\"[A-Z][a-z]+', r'\"(http|https)://[a-z]+.[a-z]+.[a-z]+']
+#     result = []
+#     for match in PATTERNS:
+#       try:
+#         reg_match = re.search(match, data).group()
+#         if reg_match:
+#           result.append(reg_match)
+#         else:
+#           result.append(" ")
+#       except:
+#         print("There was an error with the regex search")
+#     result = [x.strip() for x in result]
+#     result = [x.replace('"', "") for x in result]
+#     res = ','.join(result)
+#     return res
 
 
 
@@ -43,13 +41,13 @@ class Split(beam.DoFn):
         # date_string = d.strftime("%Y-%m-%d %H:%M:%S")
         
         return [{ 
-            'full_name': "element[0]",
-            'timelocal': "element[1]",
-            'request_type': "element[2]",
-            'body_bytes_sent': "element[3]",
-            'status': "element[4]",
-            'http_referer': "element[5]",
-            'http_user_agent': "element[6]"
+            'full_name': element[0],
+            'item_1': element[1],
+            'item_2': element[2],
+            'item_3': element[3],
+            'item_4': element[4],
+            'item_5': element[5],
+            'item_6': element[6]
     
         }]
 
@@ -66,9 +64,9 @@ def main(argv=None):
 
 
    (p
-      | 'ReadData' >> beam.io.ReadFromText('gs://dataflow_test_pipeline/test_user_log_fileC.csv')
-      | "clean address" >> beam.Map(regex_clean)
-      | 'ParseCSV' >> beam.ParDo(Split())
+      | 'ReadData' >> beam.io.ReadFromText('gs://dataflow_test_pipeline/test.csv')
+      # | "clean address" >> beam.Map(regex_clean)
+      | 'Preprocess' >> beam.ParDo(Split())
       | 'WriteToBigQuery' >> beam.io.WriteToBigQuery('{0}:dataflow_pipeline.test_table'.format(PROJECT),
         write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND)
    )
@@ -78,4 +76,3 @@ def main(argv=None):
 if __name__ == '__main__':
   logger = logging.getLogger().setLevel(logging.INFO)
   main()
-  

@@ -1,20 +1,46 @@
 steps:
-# - name: gcr.io/cloud-builders/git
-#   args: ['clone', 'https://github.com/idowuadeleke/test-repository']
-- name: 'gcr.io/$PROJECT_ID/dataflow-python'
-  entrypoint: '/bin/bash'
-  args: [ '-c',
-          'source /venv/bin/activate' ]
-# - name: 'gcr.io/$PROJECT_ID/dataflow-python'
-#   entrypoint: 'python'
-#   args: [ 
-#           'main_pipeline_batch.py', 
-#          '--runner=DataflowRunner',
-#          '--temp_location=gs://cloudbuild-dataflow-$PROJECT_ID/',
-#          '--staging_location=gs://cloudbuild-dataflow-$PROJECT_ID/',
-#          '--project=$PROJECT_ID' ]
-# tags: ['cloud-builders-community']
+# 1. Run pipeline test
+- name: 'python:3.7'
+  id: run-test
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      pip install apache-beam[gcp]
+      python test_dataflow.py
+  dir: 'walmart_proxy/pipeline'
+
+# 2. Create bigquery table
+- name: 'python:3.7'
+  id: create-bq-table
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      pip install google-api-python-client==1.11.0
+      pip install google-cloud-bigquery
+      python create_bucket.py
+  dir: 'walmart_proxy/pipeline'
+  # waitFor: ['run-test']
+
+# 3. Deploy the dataflow template to a gcs bucket
+- name: 'python:3.7'
+  entrypoint: 'bash'
+  id: deploy-template
+  args:
+    - '-c'
+    - |
+      pip install apache-beam[gcp] oauth2client==3.0.0
+      python main_pipeline_batch.py \
+      --runner DataFlow --project $PROJECT_ID \
+      --template_location gs://dataflow_test_pipeline/templates
+  dir: 'walmart_proxy/pipeline'
+  waitFor: ['create-bq-table']
+
+
+# 4. Deploy the Cloud Function that listens to the bucket
 - name: gcr.io/cloud-builders/gcloud
   id: function-deploy
-  args: ['functions', 'deploy', 'hello_gcs', '--runtime=python37',  '--trigger-resource=gs://dataflow_test_pipeline', '--trigger-event=google.storage.object.finalize']
-  dir: 'pipeline'
+  args: ['functions', 'deploy', 'trigger_dataflow', '--runtime=python37', '--trigger-resource=gs://dataflow_test_pipeline/', '--trigger-event=google.storage.object.finalize']
+  dir: 'walmart_proxy/pipeline'
+  waitFor: ['deploy-template']

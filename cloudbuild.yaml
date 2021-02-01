@@ -8,7 +8,6 @@ steps:
     - |
       pip install apache-beam[gcp]
       python test_dataflow.py
-  dir: 'walmart_proxy/pipeline'
 
 # 2. Create bigquery table
 - name: 'python:3.7'
@@ -20,8 +19,7 @@ steps:
       pip install google-api-python-client==1.11.0
       pip install google-cloud-bigquery
       python create_bucket.py
-  dir: 'walmart_proxy/pipeline'
-  # waitFor: ['run-test']
+  waitFor: ['run-test']
 
 # 3. Deploy the dataflow template to a gcs bucket
 - name: 'python:3.7'
@@ -34,7 +32,6 @@ steps:
       python main_pipeline_batch.py \
       --runner DataFlow --project $PROJECT_ID \
       --template_location gs://dataflow_test_pipeline/templates
-  dir: 'walmart_proxy/pipeline'
   waitFor: ['create-bq-table']
 
 
@@ -42,5 +39,4 @@ steps:
 - name: gcr.io/cloud-builders/gcloud
   id: function-deploy
   args: ['functions', 'deploy', 'trigger_dataflow', '--runtime=python37', '--trigger-resource=gs://dataflow_test_pipeline/', '--trigger-event=google.storage.object.finalize']
-  dir: 'walmart_proxy/pipeline'
   waitFor: ['deploy-template']
